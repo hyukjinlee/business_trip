@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:business_trip/screens/MainScreen.dart';
+import 'package:business_trip/screens/CharacterChoiceScreen.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -16,7 +16,7 @@ class _IntroScreenState extends State<IntroScreen> {
     Future.delayed(const Duration(milliseconds: 1500), () {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => MainScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) => CharacterChoiceScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -34,10 +34,10 @@ class _IntroScreenState extends State<IntroScreen> {
     return Scaffold(
       body: Center(
         child: Image.asset(
-          'assets/intro_image.png',
-          fit: BoxFit.cover,  // 이미지를 화면에 꽉 채우기 위해 BoxFit.cover 사용
+          'assets/intro/intro_image.png',
           width: double.infinity,
           height: double.infinity,
+          fit: BoxFit.cover,
         ),
       ),
     );
