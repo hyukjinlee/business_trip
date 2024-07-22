@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:business_trip/screens/RandomPickerScreen.dart';
 
 class CharacterChoiceScreen extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _CharacterChoiceScreen extends State<CharacterChoiceScreen> {
 
   // 선택된 아이템 수와 버튼 눌림 상태에 따라 하단 영역의 버튼 이미지 결정
   String get bottomButtonImage {
-    if (selectedCount > 0) {
+    if (selectedCount > 1) {
       return isButtonPressed ? 'assets/character_choice/button_pushed.png' : 'assets/character_choice/button_available.png';
     } else {
       return 'assets/character_choice/button_unavailable.png';
@@ -44,6 +45,24 @@ class _CharacterChoiceScreen extends State<CharacterChoiceScreen> {
     setState(() {
       isButtonPressed = false; // 버튼 눌림 해제 상태
     });
+  }
+
+  void _navigateToRandomPickerScreen() {
+    if (selectedCount > 1) {
+      List<int> selectedIndices = [];
+      for (int i = 0; i < selectedItems.length; i++) {
+        if (selectedItems[i]) {
+          selectedIndices.add(i);
+        }
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RandomPickerScreen(selectedIndices: selectedIndices),
+        ),
+      );
+    }
   }
 
   @override
@@ -138,7 +157,10 @@ class _CharacterChoiceScreen extends State<CharacterChoiceScreen> {
                 child: Center(
                   child: GestureDetector(
                     onTapDown: (_) => _onButtonPressed(), // 버튼 눌림 상태
-                    onTapUp: (_) => _onButtonReleased(), // 버튼 눌림 해제 상태
+                    onTapUp: (_) {
+                      _onButtonReleased(); // 버튼 눌림 해제 상태
+                      _navigateToRandomPickerScreen(); // 다음 페이지로 이동
+                    },
                     onTapCancel: () => _onButtonReleased(), // 버튼 눌림 취소 상태
                     child: AspectRatio(
                       aspectRatio: 477 / 213, // 이미지의 비율에 맞춰 조정 (너비 / 높이)

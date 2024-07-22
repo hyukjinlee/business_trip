@@ -59,6 +59,7 @@ flutter:
   assets:
     - assets/intro/
     - assets/character_choice/
+    - assets/random_picker/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
