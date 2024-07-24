@@ -123,7 +123,7 @@ class _RandomPickerScreenState extends State<RandomPickerScreen> {
                     Positioned.fill(
                       child: Image.asset(
                         spacecraftImages[widget.selectedIndices[_index]], // 적절한 경로로 변경
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     // 최하단 이미지뷰 바로 위에 얹어질 이미지뷰 (카운트다운 표시)
@@ -132,14 +132,9 @@ class _RandomPickerScreenState extends State<RandomPickerScreen> {
                       left: 0,
                       right: 0,
                       height: MediaQuery.of(context).size.height / 6, // 스택 컨테이너의 1/6
-                      child: Center(
-                        child: AspectRatio(
-                          aspectRatio: 359 / 368,
-                          child: Image.asset(
-                            countImages[_countdown - 1], // 카운트에 맞는 이미지
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      child: Image.asset(
+                        countImages[_countdown - 1], // 카운트에 맞는 이미지
+                        fit: BoxFit.contain,
                       ),
                     ),
                     // 최하단에 배치될 이미지뷰
@@ -147,25 +142,16 @@ class _RandomPickerScreenState extends State<RandomPickerScreen> {
                       bottom: 20, // 최하단 이미지뷰 위에 위치
                       left: 0,
                       right: 0,
-                      height: MediaQuery.of(context).size.height / 15, // 스택 컨테이너의 1/15
-                      child: Center(
-                        child: GestureDetector(
+                      height: _isButtonPressed ? MediaQuery.of(context).size.height / 17 : MediaQuery.of(context).size.height / 15,
+                      child: GestureDetector(
                           onTapDown: (_) => setState(() => _isButtonPressed = true),
                           onTapUp: (_) => setState(() => _isButtonPressed = false),
                           onTapCancel: () => setState(() => _isButtonPressed = false),
                           onTap: _skip, // skip 버튼 클릭 시 타이머 중지 및 페이지 전환
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 0), // 애니메이션 지속 시간
-                            height: _isButtonPressed ? MediaQuery.of(context).size.height / 17 : MediaQuery.of(context).size.height / 15,
-                            child: AspectRatio(
-                              aspectRatio: 289 / 115,
-                              child: Image.asset(
-                                'assets/random_picker/skip.png', // 적절한 경로로 변경
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                          child: Image.asset(
+                            'assets/random_picker/skip.png', // 적절한 경로로 변경
+                            fit: BoxFit.contain,
                           ),
-                        ),
                       ),
                     ),
                   ],

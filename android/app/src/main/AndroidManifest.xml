@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="business_trip"
+        android:label="나만아니면돼(출장편)"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
