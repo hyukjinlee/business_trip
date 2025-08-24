@@ -1,64 +1,107 @@
-import 'package:flutter/material.dart';
-import 'dart:async'; // Timer를 사용하기 위한 import
-import 'package:business_trip/screens/ResultScreen.dart';
+import 'dart:async';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:business_trip/screens/ResultScreen.dart';
 
 class RandomPickerScreen extends StatefulWidget {
-  final List<int> selectedIndices; // 선택된 아이템의 인덱스를 받기 위한 파라미터
+  final List<int> selectedIndices; // 선택된 아이템의 인덱스
 
-  RandomPickerScreen({required this.selectedIndices});
+  const RandomPickerScreen({super.key, required this.selectedIndices});
 
   @override
-  _RandomPickerScreenState createState() => _RandomPickerScreenState();
+  State<RandomPickerScreen> createState() => _RandomPickerScreenState();
 }
 
 class _RandomPickerScreenState extends State<RandomPickerScreen> {
-  final List<String> spacecraftImages = List.generate(12, (index) => 'assets/random_picker/spacecraft_${index + 1}.png');
-  final List<String> countImages = List.generate(5, (index) => 'assets/random_picker/count_${index + 1}.png');
+  // 에셋 경로
+  final List<String> spacecraftImages = List.generate(
+    12,
+        (i) => 'assets/random_picker/spacecraft_${i + 1}.png',
+  );
+  final List<String> countImages = List.generate(
+    5,
+        (i) => 'assets/random_picker/count_${i + 1}.png',
+  );
 
-  int _countdown = 5; // 카운트다운 초기 값
+  // 화면 상태
+  int _countdown = 5;
   int _index = 0;
-  late Timer _timer; // Timer 인스턴스
-  late Timer _randomTimer; // Timer 인스턴스
-  bool _isButtonPressed = false; // 버튼이 눌렸는지 여부
+  late Timer _timer;
+  late Timer _randomTimer;
+  bool _isButtonPressed = false;
+
+  // IndexedStack용 - 한 번만 생성해서 재사용
+  late final List<Widget> _spacecraftViews;
+  late final List<Widget> _countViews;
 
   @override
   void initState() {
     super.initState();
-    _startCountdown(); // 카운트다운 시작
+
+    // 1) 위젯 리스트 한 번만 생성
+    _spacecraftViews = spacecraftImages
+        .map((p) => Image.asset(p, fit: BoxFit.contain))
+        .toList(growable: false);
+
+    _countViews = countImages
+        .map((p) => Image.asset(p, fit: BoxFit.contain))
+        .toList(growable: false);
+
+    // 타이머 시작
+    _startCountdown();
     _startSpacecraftImageChanger();
+  }
+
+  // 1) precacheImage: 첫 노출 전 디코드/메모리 캐시 (깜빡임 방지)
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (final p in spacecraftImages) {
+      precacheImage(AssetImage(p), context);
+    }
+    for (final p in countImages) {
+      precacheImage(AssetImage(p), context);
+    }
+    // 배경/상단/버튼도 프리캐시하면 더 깔끔
+    precacheImage(const AssetImage('assets/random_picker/background.png'), context);
+    precacheImage(const AssetImage('assets/random_picker/who_is.png'), context);
+    precacheImage(const AssetImage('assets/random_picker/skip.png'), context);
   }
 
   int _getRandomSpacecraftIndex() {
     final random = Random();
-    int randomIndex = random.nextInt(widget.selectedIndices.length);
-
+    final randomIndex = random.nextInt(widget.selectedIndices.length);
     return widget.selectedIndices[randomIndex];
   }
 
-  // 카운트다운을 시작하고 1초마다 카운트를 감소시킴
-  void _startCountdown() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_countdown > 1) {
-        setState(() {
-          _countdown--;
-        });
-      } else {
-        _timer.cancel(); // 타이머 중지
-        _randomTimer.cancel(); // 타이머 중지
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(selectedIndex: _getRandomSpacecraftIndex()), // 선택된 인덱스를 전달
+  void _tickCountdown() {
+    if (!mounted) return;
+    if (_countdown > 1) {
+      setState(() => _countdown--);
+    } else {
+      _timer.cancel();
+      _randomTimer.cancel();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResultScreen(
+            selectedIndex: _getRandomSpacecraftIndex(),
           ),
-        );
-      }
-    });
+        ),
+      );
+    }
   }
 
+  // 카운트다운
+  void _startCountdown() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tickCountdown());
+  }
+
+  // 12장 이미지 100ms 간격 전환
   void _startSpacecraftImageChanger() {
-    _randomTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
+    _randomTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted) return;
       setState(() {
         _index = (_index + 1) % widget.selectedIndices.length;
       });
@@ -66,92 +109,100 @@ class _RandomPickerScreenState extends State<RandomPickerScreen> {
   }
 
   void _skip() {
-    _timer.cancel(); // 타이머 중지
-    _randomTimer.cancel(); // 타이머 중지
-
+    _timer.cancel();
+    _randomTimer.cancel();
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => ResultScreen(selectedIndex: _getRandomSpacecraftIndex()), // 선택된 인덱스를 전달
+        builder: (_) => ResultScreen(
+          selectedIndex: _getRandomSpacecraftIndex(),
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // 타이머 해제
-    _randomTimer.cancel(); // 타이머 해제
+    _timer.cancel();
+    _randomTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final deviceH = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
-          // 전체 화면 크기의 배경 이미지뷰
+          // 배경
           Positioned.fill(
             child: Image.asset(
-              'assets/random_picker/background.png', // 적절한 경로로 변경
+              'assets/random_picker/background.png',
               fit: BoxFit.cover,
             ),
           ),
           Column(
             children: [
-              // 상단 이미지뷰
+              // 상단 배너
               Expanded(
                 flex: 1,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 50, right: 50), // 모든 방향에 10의 패딩 적용
+                  padding: const EdgeInsets.symmetric(horizontal: 50),
                   child: Center(
                     child: AspectRatio(
-                      aspectRatio: 735 / 192, // AspectRatio 조정 (너비 / 높이)
+                      aspectRatio: 735 / 192,
                       child: Image.asset(
-                        'assets/random_picker/who_is.png', // 적절한 경로로 변경
+                        'assets/random_picker/who_is.png',
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
               ),
-              // 하단 스택 컨테이너
+              // 본문
               Expanded(
                 flex: 5,
                 child: Stack(
                   children: [
-                    // 스택 컨테이너와 크기가 같은 이미지뷰
+                    // 2) IndexedStack: 우주선 이미지(12장) - 위젯 재사용으로 flicker 제거
                     Positioned.fill(
-                      child: Image.asset(
-                        spacecraftImages[widget.selectedIndices[_index]], // 적절한 경로로 변경
-                        fit: BoxFit.contain,
+                      child: IndexedStack(
+                        index: widget.selectedIndices[_index],
+                        alignment: Alignment.center,     // ← 추가
+                        sizing: StackFit.expand,         // ← 추가 (자식이 영역을 가득 차게)
+                        children: _spacecraftViews,
                       ),
                     ),
-                    // 최하단 이미지뷰 바로 위에 얹어질 이미지뷰 (카운트다운 표시)
+                    // 카운트다운 이미지(5장)
                     Positioned(
-                      bottom: MediaQuery.of(context).size.height / 15 + 20, // 최하단 이미지뷰 위에 위치
+                      bottom: deviceH / 15 + 20,
                       left: 0,
                       right: 0,
-                      height: MediaQuery.of(context).size.height / 6, // 스택 컨테이너의 1/6
-                      child: Image.asset(
-                        countImages[_countdown - 1], // 카운트에 맞는 이미지
-                        fit: BoxFit.contain,
+                      height: deviceH / 6,
+                      child: IndexedStack(
+                        index: _countdown - 1,
+                        alignment: Alignment.center,     // ← 추가
+                        sizing: StackFit.expand,         // ← 추가
+                        children: _countViews,
                       ),
                     ),
-                    // 최하단에 배치될 이미지뷰
+                    // skip 버튼
                     Positioned(
-                      bottom: 20, // 최하단 이미지뷰 위에 위치
+                      bottom: 20,
                       left: 0,
                       right: 0,
-                      height: _isButtonPressed ? MediaQuery.of(context).size.height / 17 : MediaQuery.of(context).size.height / 15,
+                      height: _isButtonPressed ? deviceH / 17 : deviceH / 15,
                       child: GestureDetector(
-                          onTapDown: (_) => setState(() => _isButtonPressed = true),
-                          onTapUp: (_) => setState(() => _isButtonPressed = false),
-                          onTapCancel: () => setState(() => _isButtonPressed = false),
-                          onTap: _skip, // skip 버튼 클릭 시 타이머 중지 및 페이지 전환
-                          child: Image.asset(
-                            'assets/random_picker/skip.png', // 적절한 경로로 변경
-                            fit: BoxFit.contain,
-                          ),
+                        onTapDown: (_) => setState(() => _isButtonPressed = true),
+                        onTapUp: (_) => setState(() => _isButtonPressed = false),
+                        onTapCancel: () => setState(() => _isButtonPressed = false),
+                        onTap: _skip,
+                        child: Image.asset(
+                          'assets/random_picker/skip.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ],
